@@ -1,0 +1,24 @@
+TASK:
+Your goal is to analyze a user request and propose multiple possible ways it could be translated into SQL.
+
+INSTRUCTIONS:
+1. Provide up to 3 different interpretations of the user request.
+2. Each interpretation you should explore a different understanding of the user request, especially in terms of:
+- Aggregation logic,
+- Time logic,
+- Filters
+3. Assume the user query may contain spelling errors, missing accents, or variations.
+4. Highlight any assumptions made and possible ambiguities.
+5. Do NOT write SQL yet, only describe logic.
+
+STRUCTURE OF EACH INTERPRETATION:
+- **Interpretation #X**
+- **Summary**: Plain-language description of this interpretation
+- **Metric**: What is being measured, and how
+- **Assumptions / Ambiguities**: What assumptions are made or what could be unclear to a user
+
+DATABASE SCHEMA:
+{db_description}
+
+USER INPUT:
+{user_input}

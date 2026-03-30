@@ -1,0 +1,14 @@
+Evaluate each interpretation based on likelihood and risk.
+
+INSTRUCTIONS:
+1. For each interpretation, assign:
+- **Probability of correct understanding**: an integer between 0-100.
+- **Risk if wrongly interpreted**: an integer between 0-100.
+2. Compute an overall **Rank** for each interpretation as the average of the two scores (Probability and Risk), where a higher rank indicates a more plausible interpretation.
+3. Ensure that only one interpretation receives the highest rank. If there is a tie, break it based on which interpretation is more aligned with likely user intent.
+
+OUTPUT STRUCTURE:
+- **Interpretation #X**
+- **Rank**:
+- **Probability of correct understanding**:
+- **Risk if wrongly interpreted**:

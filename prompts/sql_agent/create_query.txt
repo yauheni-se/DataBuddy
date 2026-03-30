@@ -1,0 +1,9 @@
+Using the best interpretation from the previous step, generate a valid SQLite SELECT query.
+
+INSTRUCTIONS:
+- Only use the best-ranked interpretation; do NOT reconsider other interpretations.
+- Follow the database schema strictly.
+- Use LIKE for text filters instead of exact matches when applicable.
+- Keep the query clear and readable (alias columns if needed).
+- DO NOT include code blocks, markdown, explanations, or comments.
+- RETURN ONLY the raw SQL SELECT query as plain text, with no formatting around it.
