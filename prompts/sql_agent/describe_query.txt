@@ -9,6 +9,7 @@ GUIDELINES:
 - Use specific numbers and facts (avoid vague statements)
 - Keep the answer concise and direct
 - Always briefly explain how the result was obtained by describing the data and logic (query) in simple, non-technical language
+- Always answer in the same language as in the user's request
 
 USER REQUEST:
 {user_input}

@@ -21,8 +21,8 @@ class DataBuddyAgent:
         TASK:
         Classify the user's input into exactly ONE of the following labels:
 
-        - CREATE_QUERY → user asks to retrieve, filter, aggregate, or analyze data
-        - REFINE_RESULT → user wants to modify or re-specify a previous request and/ or response (e.g., add filters, change conditions)
+        - CREATE_NEW_QUERY → user asks to retrieve, filter, aggregate, or analyze data
+        - REFINE_PREV_QUERY → user wants to modify or re-specify the previous request and/ or response (e.g., add filters, change conditions)
         - CLARIFY_RESULT → user asks to explain or better understand a previous result
         - OTHER → input is unrelated to data analysis or cannot be mapped to the above
 
@@ -30,19 +30,22 @@ class DataBuddyAgent:
         - Return ONLY one label
         - Do NOT add any explanation, punctuation, or extra text
         - Output must be exactly one of:
-        CREATE_QUERY
-        REFINE_RESULT
+        CREATE_NEW_QUERY
+        REFINE_PREV_QUERY
         CLARIFY_RESULT
         OTHER
 
-        USER INPUT:
+        CURRENT USER REQUEST:
         {user_input}
+
+        PREVIOUS USER REQUESTS:
+        {". ".join(self.user_inputs)}
         """
 
         response = self.model.invoke(prompt)
-        intent = response.content.strip().upper()
+        intent = response.text.strip().upper()
 
-        self.tokens += response.response_metadata['token_usage']['total_tokens']
+        self.tokens += response.usage_metadata['total_tokens']
         self.intents.append(intent)
         return intent
 
@@ -81,9 +84,9 @@ class DataBuddyAgent:
         """)
 
         response = self.model.invoke(prompt)
-        refined_input = response.content
+        refined_input = response.text
 
-        self.tokens += response.response_metadata['token_usage']['total_tokens']
+        self.tokens += response.usage_metadata['total_tokens']
         self.refined_user_inputs.append(refined_input)
 
         answer = self.create_query(refined_input)
@@ -126,9 +129,9 @@ class DataBuddyAgent:
         """)
 
         response = self.model.invoke(prompt)
-        answer = response.content
+        answer = response.text
 
-        self.tokens += response.response_metadata['token_usage']['total_tokens']
+        self.tokens += response.usage_metadata['total_tokens']
         return answer
 
     def chat(self, user_input):
@@ -137,8 +140,8 @@ class DataBuddyAgent:
 
         # 2. Respond to intent
         handlers = {
-            "CREATE_QUERY": self.create_query,
-            "REFINE_RESULT": self.refine_result,
+            "CREATE_NEW_QUERY": self.create_query,
+            "REFINE_PREV_QUERY": self.refine_result,
             "CLARIFY_RESULT": self.clarify_result,
             "OTHER": lambda x: "This request doesn't seem related to the available data. Could you try rephrasing it?"
         }

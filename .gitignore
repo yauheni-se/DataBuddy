@@ -1,2 +1,3 @@
 data/
 finance.db
+__pycache__/

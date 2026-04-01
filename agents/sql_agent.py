@@ -1,23 +1,8 @@
 import sqlite3
 import re
 import pandas as pd
-from textwrap import dedent
 from IPython.display import display
-
-def read_prompt(path: str, **kwargs) -> str:
-    """
-    Reads a prompt template from a text file and formats it with the given keyword arguments.
-
-    Args:
-        path (str): Path to the prompt .txt file.
-        **kwargs: Key-value pairs to fill placeholders in the template.
-
-    Returns:
-        str: Formatted prompt string.
-    """
-    with open(path, "r", encoding="utf-8") as f:
-        template = f.read()
-    return template.format(**kwargs)
+from utils import read_prompt
 
 
 class SQLAgent:
@@ -38,52 +23,28 @@ class SQLAgent:
         self.tokens = 0
         self.df = pd.DataFrame()
 
-    def generate_query(self):
-        # 1. List interpretations
-        prompt = read_prompt("prompts\sql_agent\list_interpretations.txt", db_description=self.db_description, user_input=self.user_input)
-        messages = [
-            {"role": "system", "content": "You are an expert data analyst and intent recognition system."},
-            {"role": "user", "content": prompt}
-        ]
-        response1 = self.model.invoke(messages)
-        messages.append({"role": "assistant", "content": response1.content})
-
-        # 2. Evaluate interpretations
-        prompt = read_prompt("prompts\sql_agent\eval_interpratetions.txt")
-        messages.append({"role": "user", "content": prompt})
-        response2 = self.model.invoke(messages)
-        messages.append({"role": "assistant", "content": response2.content})
-
-        # 3. Create query
-        prompt = read_prompt("prompts\sql_agent\create_query.txt")
-        messages.append({"role": "user", "content": prompt})
-        response3 = self.model.invoke(messages)
-        self.query = response3.content
-
-        # 4. Update attributes
-        self.previous_queries.append(self.query)
-        self.attempt += 1
-        self.tokens += (
-            response1.response_metadata['token_usage']['total_tokens'] + 
-            response2.response_metadata['token_usage']['total_tokens'] + 
-            response3.response_metadata['token_usage']['total_tokens']
+    def generate_query(self, refine=False):
+        if refine:
+            prompt = read_prompt(
+                "prompts/sql_agent/refine_query.txt", 
+                db_description=self.db_description, 
+                user_input=self.user_input,
+                previous_queries=", ".join(self.previous_queries),
+                errors=", ".join(self.errors)
+            )
+        else:
+            prompt = read_prompt(
+                "prompts/sql_agent/generate_query.txt", 
+                db_description=self.db_description,
+                user_input=self.user_input
         )
-        return self.query
-
-    def refine_query(self):
-        prompt = read_prompt(
-            "prompts\sql_agent\refine_query.txt", 
-            db_description=self.db_description, 
-            user_input=self.user_input,
-            previous_queries=", ".join(self.previous_queries),
-            errors=", ".join(self.errors)
-        )
-
+        
+        
         response = self.model.invoke(prompt)
-        self.query = response.content
+        self.query = response.text
         self.previous_queries.append(self.query)
         self.attempt += 1
-        self.tokens += response.response_metadata['token_usage']['total_tokens']
+        self.tokens += response.usage_metadata['total_tokens']
         return self.query
 
     def check_query(self):
@@ -114,7 +75,7 @@ class SQLAgent:
             if self.attempt == 0:
                 self.generate_query()
             else:
-                self.refine_query()
+                self.generate_query(refine=True)
 
             try:
                 self.check_query()
@@ -146,8 +107,8 @@ class SQLAgent:
                 table=table
             )
             response = self.model.invoke(prompt)
-            answer = response.content
-            self.tokens += response.response_metadata['token_usage']['total_tokens']
+            answer = response.text
+            self.tokens += response.usage_metadata['total_tokens']
         else:
             answer = "The result is quite large, so I've displayed the data instead. You can ask me to summarize it or narrow down your request."
             display(self.df)
