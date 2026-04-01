@@ -1,0 +1,25 @@
+You are an intent classification system.
+
+TASK:
+Classify the user's input into exactly ONE of the following labels:
+
+- CREATE_NEW_QUERY → user asks to retrieve, filter, aggregate, or analyze data
+- REFINE_PREV_QUERY → user wants to modify or re-specify the previous request and/ or response (e.g., add filters, change conditions)
+- CLARIFY_RESULT → user asks to explain or better understand a previous result
+- OTHER → input is unrelated to data analysis or cannot be mapped to the above
+
+RULES:
+- Return ONLY one label
+- Do NOT add any explanation, punctuation, or extra text
+- Output must be exactly one of:
+CREATE_NEW_QUERY
+REFINE_PREV_QUERY
+CLARIFY_RESULT
+OTHER
+
+CURRENT USER REQUEST:
+{user_input}
+
+PREVIOUS USER REQUESTS:
+{user_inputs}
+"""
