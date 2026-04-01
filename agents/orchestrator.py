@@ -11,9 +11,18 @@ class DataBuddyAgent:
         self.user_inputs = []
         self.chat_answers = []
         self.queries = []
-
         self.intents = []
         self.refined_user_inputs = []
+
+    def __str__(self):
+        return (
+            f"User inputs: {self.user_inputs}\n"
+            f"Recognized intents: {self.intents}\n"
+            f"Buddy answers: {self.chat_answers}\n"
+            f"Generated queries: {self.queries}\n"
+            f"Refined user inputs: {self.refined_user_inputs}\n"
+            f"Total tokens spent: {self.tokens}"
+        )
 
     def recognize_intent(self, user_input):
         prompt = read_prompt(
@@ -78,6 +87,28 @@ class DataBuddyAgent:
         self.tokens += response.usage_metadata['total_tokens']
         return answer
 
+    def redirect_intent(self, user_input) -> str:
+        prompt = read_prompt(
+            "prompts/orchestrator/redirect_intent.txt",
+            user_input=user_input
+        )
+
+        response = self.model.invoke(prompt)
+        answer = response.text
+        self.tokens += response.usage_metadata['total_tokens']
+        return answer
+    
+    def clarify_intent(self, user_input) -> str:
+        prompt = read_prompt(
+            "prompts/orchestrator/clarify_intent.txt",
+            user_input=user_input
+        )
+
+        response = self.model.invoke(prompt)
+        answer = response.text
+        self.tokens += response.usage_metadata['total_tokens']
+        return answer
+
     def chat(self, user_input):
         # 1. Recognize intent
         intent = self.recognize_intent(user_input)
@@ -87,9 +118,9 @@ class DataBuddyAgent:
             "CREATE_NEW_QUERY": self.create_query,
             "REFINE_PREV_QUERY": self.refine_intent,
             "CLARIFY_RESULT": self.clarify_result,
-            "OTHER": lambda x: "This request doesn't seem related to the available data. Could you try rephrasing it?"
+            "OTHER": self.redirect_intent
         }
-        answer = handlers.get(intent, lambda x: "Sorry, I didn't quite catch that. Could you clarify what you'd like me to do?")(user_input)
+        answer = handlers.get(intent, self.clarify_intent)(user_input)
 
         # 3. Manage memory
         self.user_inputs.append(user_input)
@@ -114,5 +145,6 @@ class DataBuddyAgent:
         self.tokens = 0
         self.user_inputs = []
         self.chat_answers = []
-        self.intents = []
         self.queries = []
+        self.intents = []
+        self.refined_user_inputs = []

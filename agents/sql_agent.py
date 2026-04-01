@@ -97,21 +97,35 @@ class SQLAgent:
     
     def wrap(self):
         if self.failed:
-            answer = f"I couldn't generate a valid query for your request. Here are the issues I ran into: {', '.join(self.errors)}. Could you rephrase or provide more details?"
+            prompt = read_prompt(
+                "prompts\sql_agent\describe_query_with_no_table.txt", 
+                user_input=self.user_input,
+                query=self.query,
+                errors=', '.join(self.errors)
+            )
         elif not self.failed and self.df.shape[0] == 1:
             table = self.df.to_string(index=False)
             prompt = read_prompt(
-                "prompts\sql_agent\describe_query.txt", 
+                "prompts\sql_agent\describe_query_with_table.txt", 
                 user_input=self.user_input,
                 query=self.query, 
                 table=table
             )
-            response = self.model.invoke(prompt)
-            answer = response.text
-            self.tokens += response.usage_metadata['total_tokens']
-        else:
-            answer = "The result is quite large, so I've displayed the data instead. You can ask me to summarize it or narrow down your request."
             display(self.df)
+        else:
+            table = self.df.head(1).to_string(index=False)
+            prompt = read_prompt(
+                "prompts\sql_agent\describe_query_with_sample_table.txt", 
+                user_input=self.user_input,
+                query=self.query,
+                table=table
+            )
+            display(self.df)
+
+        response = self.model.invoke(prompt)
+        answer = response.text
+        self.tokens += response.usage_metadata['total_tokens']
+
         return answer
 
     def chat(self, user_input):
